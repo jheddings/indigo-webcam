@@ -2,6 +2,8 @@
 
 import urllib2
 import datetime
+import ftplib
+import StringIO
 
 ################################################################################
 class Plugin(indigo.PluginBase):
@@ -36,20 +38,39 @@ class Plugin(indigo.PluginBase):
     def doSaveLocalFile(self, action):
         now = datetime.datetime.now();
 
-        image_url = action.props.get('image_url', '')
-        image_data = self._getImage(image_url)
+        imageURL = action.props.get('image_url', '')
+        imageData = self._getImage(imageURL)
 
         filename = self.substitute(action.props.get('filename', ''))
         filename = now.strftime(filename)
 
-        self._saveLocalFile(filename, image_data)
+        self._saveLocalFile(filename, imageData)
 
     #---------------------------------------------------------------------------
     def doFtpPutFile(self, action):
         now = datetime.datetime.now();
 
-        image_url = action.props.get('image_url', '')
-        local_file = self._getImage(image_url)
+        imageURL = action.props.get('image_url', '')
+        imageData = self._getImage(imageURL)
+
+        server = action.props.get('server', '')
+        username = action.props.get('username', '')
+        password = action.props.get('password', '')
+
+        ftp = ftplib.FTP()
+
+        self.logger.debug(u'connecting to FTP server: %s', server)
+        ftp.connect(server)
+        ftp.login(username, password)
+
+        filename = self.substitute(action.props.get('filename', ''))
+        filename = now.strftime(filename)
+
+        self.logger.debug(u'saving %d bytes to %s', len(imageData), filename)
+        ftp.storbinary('STOR ' + filename, StringIO.StringIO(imageData))
+
+        self.logger.debug(u'closing FTP session')
+        ftp.quit()
 
     #---------------------------------------------------------------------------
     def _saveLocalFile(self, filename, data):

@@ -51,7 +51,7 @@
         <Label>FTP Username:</Label>
       </Field>
 
-      <Field id="password" type="password">
+      <Field id="password" type="textfield">
         <Label>FTP Password:</Label>
       </Field>
 
