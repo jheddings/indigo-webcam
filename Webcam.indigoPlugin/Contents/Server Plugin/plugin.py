@@ -39,7 +39,7 @@ class Plugin(indigo.PluginBase):
         now = datetime.datetime.now();
 
         imageURL = action.props.get('image_url', '')
-        imageData = self._getImage(imageURL)
+        imageData = self._getImageData(imageURL)
 
         filename = self.substitute(action.props.get('filename', ''))
         filename = now.strftime(filename)
@@ -51,37 +51,41 @@ class Plugin(indigo.PluginBase):
         now = datetime.datetime.now();
 
         imageURL = action.props.get('image_url', '')
-        imageData = self._getImage(imageURL)
+        imageData = self._getImageData(imageURL)
 
         server = action.props.get('server', '')
         username = action.props.get('username', '')
         password = action.props.get('password', '')
 
+        filename = self.substitute(action.props.get('filename', ''))
+        filename = now.strftime(filename)
+
+        self._putFtpFile(server, username, password, filename, imageData)
+
+    #---------------------------------------------------------------------------
+    def _saveLocalFile(self, filename, data):
+        self.logger.debug(u'saving %d bytes to %s', len(data), filename)
+
+        with open(filename, 'wb') as fh:
+            fh.write(data)
+
+    #---------------------------------------------------------------------------
+    def _putFtpFile(self, server, username, password, path, data):
         ftp = ftplib.FTP()
 
         self.logger.debug(u'connecting to FTP server: %s', server)
         ftp.connect(server)
         ftp.login(username, password)
 
-        filename = self.substitute(action.props.get('filename', ''))
-        filename = now.strftime(filename)
-
-        self.logger.debug(u'saving %d bytes to %s', len(imageData), filename)
-        ftp.storbinary('STOR ' + filename, StringIO.StringIO(imageData))
+        self.logger.debug(u'saving %d bytes to %s', len(data), path)
+        strbuf = StringIO.StringIO(data)
+        ftp.storbinary('STOR ' + path, strbuf)
 
         self.logger.debug(u'closing FTP session')
         ftp.quit()
 
     #---------------------------------------------------------------------------
-    def _saveLocalFile(self, filename, data):
-        self.logger.debug(u'saving %d bytes to %s', len(data), filename)
-
-        fh = open(filename, 'w')
-        fh.write(data)
-        fh.close()
-
-    #---------------------------------------------------------------------------
-    def _getImage(self, url):
+    def _getImageData(self, url):
         self.logger.debug(u'downloading image: %s', url)
 
         resp = urllib2.urlopen(url)
