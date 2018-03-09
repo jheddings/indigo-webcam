@@ -5,7 +5,8 @@ Provide actions for handling webcam images.
 ## NOTE
 
 This plugin is still in early development stage.  There is very little error handling, so
-please use at your own risk.  Feel free to add 
+please use at your own risk.  Feel free to open issues or refer to the plugin forum for
+support or to file bugs.
 
 ## Requirements
 
