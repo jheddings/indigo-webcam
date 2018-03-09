@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<MenuItems>
+  <MenuItem id="refreshPowerStatus">
+    <Name>Refresh Device Status</Name>
+    <CallbackMethod>refreshDeviceStatus</CallbackMethod>
+  </MenuItem>
+</MenuItems>
