@@ -37,14 +37,13 @@ class Plugin(indigo.PluginBase):
     #---------------------------------------------------------------------------
     def doSaveLocalFile(self, action):
         now = datetime.datetime.now();
-
-        imageURL = action.props.get('image_url', '')
-        imageData = self._getImageData(imageURL)
+        imageData = self._downloadImageFromAction(action)
 
         if (imageData is None):
             return False
 
-        filename = self.substitute(action.props.get('filename', ''))
+        userValue = action.props.get('filename', '')
+        filename = self.substitute(userValue)
         filename = now.strftime(filename)
 
         self._saveLocalFile(filename, imageData)
@@ -54,15 +53,17 @@ class Plugin(indigo.PluginBase):
     #---------------------------------------------------------------------------
     def doFtpPutFile(self, action):
         now = datetime.datetime.now();
+        imageData = self._downloadImageFromAction(action)
 
-        imageURL = action.props.get('image_url', '')
-        imageData = self._getImageData(imageURL)
+        if (imageData is None):
+            return False
 
         server = action.props.get('server', '')
         username = action.props.get('username', '')
         password = action.props.get('password', '')
 
-        filename = self.substitute(action.props.get('filename', ''))
+        userValue = action.props.get('filename', '')
+        filename = self.substitute(userValue)
         filename = now.strftime(filename)
 
         return self._putFtpFile(server, username, password, filename, imageData)
@@ -104,6 +105,36 @@ class Plugin(indigo.PluginBase):
             self.logger.warn(u'FTP error: %s', err)
 
         return uploaded
+
+    #---------------------------------------------------------------------------
+    def _downloadImageFromAction(self, action):
+        auth = action.props.get('auth', None)
+        url = action.props.get('image_url', '')
+
+        if ((auth is None) or (auth == 'none')):
+            self.logger.debug(u'no auth handler configured')
+
+        elif (auth == 'basic'):
+            uname = action.props.get('username', None)
+            passwd = action.props.get('password', None)
+
+            self.logger.debug(u'configuring for basic auth - %s', uname)
+            self._configureBasicAuth(url, uname, passwd)
+
+        else:
+            self.logger.warn(u'unknown authentication method - %s', auth)
+
+        return self._getImageData(url)
+
+    #---------------------------------------------------------------------------
+    def _configureBasicAuth(self, url, user, passwd):
+        passmgr = urllib2.HTTPPasswordMgrWithDefaultRealm()
+        passmgr.add_password(None, url, user, passwd)
+
+        hdlr = urllib2.HTTPBasicAuthHandler(passmgr)
+        opener = urllib2.build_opener(hdlr)
+
+        urllib2.install_opener(opener)
 
     #---------------------------------------------------------------------------
     def _getImageData(self, url):
