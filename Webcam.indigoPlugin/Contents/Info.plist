@@ -3,7 +3,7 @@
 <plist version="1.0">
   <dict>
     <key>CFBundleDisplayName</key><string>Webcam</string>
-    <key>PluginVersion</key><string>0.2.1</string>
+    <key>PluginVersion</key><string>0.2.2</string>
     <key>CFBundleIdentifier</key><string>com.heddings.indigo.webcam</string>
     <key>ServerApiVersion</key><string>2.0</string>
     <key>CFBundleVersion</key><string>1.0.0</string>
