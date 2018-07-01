@@ -41,10 +41,15 @@ class Plugin(indigo.PluginBase):
         imageURL = action.props.get('image_url', '')
         imageData = self._getImageData(imageURL)
 
+        if (imageData is None):
+            return False
+
         filename = self.substitute(action.props.get('filename', ''))
         filename = now.strftime(filename)
 
         self._saveLocalFile(filename, imageData)
+
+        return True
 
     #---------------------------------------------------------------------------
     def doFtpPutFile(self, action):
@@ -60,7 +65,7 @@ class Plugin(indigo.PluginBase):
         filename = self.substitute(action.props.get('filename', ''))
         filename = now.strftime(filename)
 
-        self._putFtpFile(server, username, password, filename, imageData)
+        return self._putFtpFile(server, username, password, filename, imageData)
 
     #---------------------------------------------------------------------------
     def _saveLocalFile(self, filename, data):
@@ -73,26 +78,48 @@ class Plugin(indigo.PluginBase):
     def _putFtpFile(self, server, username, password, path, data):
         ftp = ftplib.FTP()
 
-        self.logger.debug(u'connecting to FTP server: %s', server)
-        ftp.connect(server)
-        ftp.login(username, password)
+        uploaded = False
 
-        self.logger.debug(u'saving %d bytes to %s', len(data), path)
-        strbuf = StringIO.StringIO(data)
-        ftp.storbinary('STOR ' + path, strbuf)
+        try:
+            self.logger.debug(u'connecting to FTP server: %s', server)
+            ftp.connect(server)
 
-        self.logger.debug(u'closing FTP session')
-        ftp.quit()
+            self.logger.debug(u'initiating FTP login: %s', username)
+            ftp.login(username, password)
+
+            self.logger.debug(u'saving %d bytes to %s', len(data), path)
+            strbuf = StringIO.StringIO(data)
+            ftp.storbinary('STOR ' + path, strbuf)
+
+            # if we make it this far, the file was uploaded
+            uploaded = True
+
+            self.logger.debug(u'closing FTP session')
+            ftp.quit()
+
+        except EOFError:
+            self.logger.warn(u'FTP session closed by server')
+
+        except ftplib.error_perm as err:
+            self.logger.warn(u'FTP error: %s', err)
+
+        return uploaded
 
     #---------------------------------------------------------------------------
     def _getImageData(self, url):
         self.logger.debug(u'downloading image: %s', url)
 
-        resp = urllib2.urlopen(url)
-        self.logger.debug(u'HTTP: %d', resp.getcode())
+        data = None
 
-        data = resp.read()
-        self.logger.debug(u'downloaded %d bytes', len(data))
+        try:
+            resp = urllib2.urlopen(url)
+            self.logger.debug(u'HTTP: %d', resp.getcode())
+
+            data = resp.read()
+            self.logger.debug(u'downloaded %d bytes', len(data))
+
+        except urllib2.HTTPError as err:
+            self.logger.warn(u'HTTP Error: %s', err.reason)
 
         return data
 
