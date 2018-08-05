@@ -95,6 +95,7 @@
         <Label>FTP server address</Label>
       </Field>
 
+      <!-- FIXME these cannot be the same id as the HTTP basic auth -->
       <Field id="username" type="textfield">
         <Label>FTP Username:</Label>
       </Field>

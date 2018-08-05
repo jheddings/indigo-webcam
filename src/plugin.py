@@ -5,38 +5,30 @@ import datetime
 import ftplib
 import StringIO
 
+import iplug
+
 ################################################################################
-class Plugin(indigo.PluginBase):
+class Plugin(iplug.PluginBase):
 
     #---------------------------------------------------------------------------
-    def __init__(self, pluginId, pluginDisplayName, pluginVersion, pluginPrefs):
-        indigo.PluginBase.__init__(self, pluginId, pluginDisplayName, pluginVersion, pluginPrefs)
-        self._loadPluginPrefs(pluginPrefs)
-
-    #---------------------------------------------------------------------------
-    def __del__(self):
-        indigo.PluginBase.__del__(self)
-
-    #---------------------------------------------------------------------------
-    def validatePrefsConfigUi(self, values):
+    def validateActionConfigUi(self, values, typeId, deviceId):
         errors = indigo.Dict()
 
-        return ((len(errors) == 0), values, errors)
+        iplug.validateConfig_URL('image_url', values, errors)
+        iplug.validateConfig_String('username', values, errors, True)
+        iplug.validateConfig_String('password', values, errors, True)
 
-    #---------------------------------------------------------------------------
-    def closedPrefsConfigUi(self, values, canceled):
-        if canceled: return
-        self._loadPluginPrefs(values)
-
-    #---------------------------------------------------------------------------
-    def validateActionConfigUi(self, values, typeId, devId):
-        errors = indigo.Dict()
+        if (typeId == 'save_file'):
+            iplug.validateConfig_Path('filename', values, errors)
+        elif (typeId == 'ftp_put'):
+            iplug.validateConfig_Hostname('server', values, errors)
+            iplug.validateConfig_Path('filename', values, errors)
 
         return ((len(errors) == 0), values, errors)
 
     #---------------------------------------------------------------------------
     def doSaveLocalFile(self, action):
-        now = datetime.datetime.now();
+        now = datetime.datetime.now()
         imageData = self._downloadImageFromAction(action)
 
         if (imageData is None):
@@ -52,7 +44,7 @@ class Plugin(indigo.PluginBase):
 
     #---------------------------------------------------------------------------
     def doFtpPutFile(self, action):
-        now = datetime.datetime.now();
+        now = datetime.datetime.now()
         imageData = self._downloadImageFromAction(action)
 
         if (imageData is None):
@@ -153,16 +145,4 @@ class Plugin(indigo.PluginBase):
             self.logger.warn(u'HTTP Error: %s', err.reason)
 
         return data
-
-    #---------------------------------------------------------------------------
-    def _loadPluginPrefs(self, values):
-        logLevelTxt = values.get('logLevel', None)
-
-        if logLevelTxt is None:
-            self.logLevel = 20
-        else:
-            logLevel = int(logLevelTxt)
-            self.logLevel = logLevel
-
-        self.indigo_log_handler.setLevel(self.logLevel)
 
