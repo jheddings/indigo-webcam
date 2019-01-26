@@ -130,6 +130,7 @@ class Plugin(iplug.PluginBase):
 
     #---------------------------------------------------------------------------
     def _getImageData(self, url):
+        if (url is None): return None
         self.logger.debug(u'downloading image: %s', url)
 
         data = None
@@ -142,7 +143,10 @@ class Plugin(iplug.PluginBase):
             self.logger.debug(u'downloaded %d bytes', len(data))
 
         except urllib2.HTTPError as err:
-            self.logger.warn(u'HTTP Error: %s', err.reason)
+            self.logger.warn(u'HTTP Error (%d): %s', err.code, err.reason)
+
+        except urllib2.URLError as err:
+            self.logger.warn(u'URL Error: %s', err.reason)
 
         return data
 
