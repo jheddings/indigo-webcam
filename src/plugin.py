@@ -93,8 +93,11 @@ class Plugin(iplug.PluginBase):
         except EOFError:
             self.logger.warn(u'FTP session closed by server')
 
-        except ftplib.error_perm as err:
+        except ftplib.error_temp as err:
             self.logger.warn(u'FTP error: %s', err)
+
+        except ftplib.error_perm as err:
+            self.logger.error(u'FTP error: %s', err)
 
         return uploaded
 
